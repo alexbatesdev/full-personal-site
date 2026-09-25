@@ -6,11 +6,11 @@ After=network.target
 Type=simple
 User=personal-site
 Group=personal-site
-WorkingDirectory=/var/www/personal-site-backend
+WorkingDirectory=/home/personal-site/personal-site-backend
 Environment=PYTHONUNBUFFERED=1
 RuntimeDirectory=personal-site-backend
 RuntimeDirectoryMode=0755
-ExecStart=/var/www/personal-site-backend/.venv/bin/gunicorn --config /var/www/personal-site-backend/deploy/gunicorn/gunicorn.conf.py personal_site_backend.main:app
+ExecStart=/home/personal-site/personal-site-backend/.venv/bin/gunicorn --config /home/personal-site/personal-site-backend/deploy/gunicorn/gunicorn.conf.py personal_site_backend.main:app
 Restart=on-failure
 RestartSec=5
 KillSignal=SIGQUIT
