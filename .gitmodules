@@ -1,0 +1,3 @@
+[submodule "src/personal_site_imported_frontend"]
+	path = src/personal_site_imported_frontend
+	url = https://github.com/Mcbuzzerr/neocity-website.git
