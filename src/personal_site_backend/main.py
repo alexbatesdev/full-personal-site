@@ -7,9 +7,8 @@ import uvicorn
 
 from personal_site_backend.api.router import api_router
 
-WEBSITE_DIRECTORY = Path(
-    r"C:\Users\Alex\Documents\My_Documents__\Personal Code\neocity-website"
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+WEBSITE_DIRECTORY = PROJECT_ROOT / "src" / "personal_site_imported_frontend"
 
 app = FastAPI(title="Personal Site Backend")
 
