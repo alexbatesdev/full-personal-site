@@ -1,6 +1,6 @@
 # Deployment
 
-These templates assume the repository is deployed to `/var/www/personal-site-backend` and the domain is replaced in `nginx/personal-site.conf`.
+These templates assume the repository is deployed to `/home/personal-site/personal-site-backend` and the domain is replaced in `nginx/personal-site.conf`.
 
 ## Initial VPS setup
 
@@ -15,10 +15,8 @@ Create the service account and checkout the repository with its frontend submodu
 
 ```bash
 sudo useradd --system --create-home --home-dir /var/www/personal-site --shell /usr/sbin/nologin personal-site
-sudo mkdir -p /var/www
-sudo chown personal-site:personal-site /var/www/personal-site
-sudo -u personal-site git clone --recurse-submodules <backend-repository-url> /var/www/personal-site-backend
-cd /var/www/personal-site-backend
+sudo -u personal-site git clone --recurse-submodules <backend-repository-url> /home/personal-site/personal-site-backend
+cd /home/personal-site/personal-site-backend
 sudo -u personal-site uv sync --no-dev
 ```
 
@@ -48,3 +46,13 @@ sudo systemctl restart personal-site-backend
 ```
 
 The unit uses `Restart=on-failure`, so systemd restarts the service after an unexpected process exit.
+
+## Deploy updates
+
+Run the deployment script as root from the checked-out repository:
+
+```bash
+sudo scripts/deploy.sh
+```
+
+The script fast-forwards the checkout to `origin/master`, updates the frontend submodule, syncs production dependencies, and restarts `personal-site-backend`. It refuses to overwrite local changes because it uses `git pull --ff-only`.
