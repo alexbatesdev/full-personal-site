@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from personal_site_backend.api.dependencies.security import (
     require_internal_token,
 )
 from personal_site_backend.api.tables.posts import Post
+from personal_site_backend.main import WEBSITE_DIRECTORY
 
 # ^^ Imports ^^
 
@@ -31,10 +33,16 @@ class PostRead(PostFields):
 
 # ^^ Types ^^
 
-router = APIRouter(tags=["posts"], prefix="/posts")
+post_html_router = APIRouter(tags=["posts html"], prefix="/posts")
+post_api_router = APIRouter(tags=["posts"], prefix="/posts")
 
 
-@router.get("/", response_model=list[PostRead])
+@post_html_router.get("/{post_id}", response_model=list[PostRead])
+def post_page(post_id: int):
+    return FileResponse(WEBSITE_DIRECTORY / "posts" / "post_details.html")  
+
+
+@post_api_router.get("/", response_model=list[PostRead])
 def index(
     session: Session = Depends(get_db),
     admin_header_present: bool = Depends(has_internal_token),
@@ -46,7 +54,7 @@ def index(
     return list(session.scalars(query).all())
 
 
-@router.get("/{post_id}", response_model=PostRead)
+@post_api_router.get("/{post_id}", response_model=PostRead)
 def get_post(
     post_id: int,
     session: Session = Depends(get_db),
@@ -70,7 +78,7 @@ def get_post(
 # vv Secured routes (require secret password) vv
 
 
-@router.post(
+@post_api_router.post(
     "/", response_model=PostRead, dependencies=[Depends(require_internal_token)]
 )
 def create_post(payload: PostCreate, session: Session = Depends(get_db)):
@@ -81,7 +89,7 @@ def create_post(payload: PostCreate, session: Session = Depends(get_db)):
     return post
 
 
-@router.put(
+@post_api_router.put(
     "/{post_id}",
     response_model=PostRead,
     dependencies=[Depends(require_internal_token)],
@@ -97,7 +105,7 @@ def update_post(post_id: int, payload: PostCreate, session: Session = Depends(ge
     return post
 
 
-@router.delete(
+@post_api_router.delete(
     "/{post_id}", status_code=204, dependencies=[Depends(require_internal_token)]
 )
 def delete_post(post_id: int, session: Session = Depends(get_db)):
@@ -106,3 +114,4 @@ def delete_post(post_id: int, session: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Post not found")
     session.delete(post)
     session.commit()
+

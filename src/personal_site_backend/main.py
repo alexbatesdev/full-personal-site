@@ -6,7 +6,7 @@ from fastapi.concurrency import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-from personal_site_backend.api.router import api_router
+from personal_site_backend.api.router import api_router, html_router
 
 from personal_site_backend.api.dependencies.database import init_db
 
@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Personal Site Backend", lifespan=lifespan)
 
 app.include_router(api_router)
+app.include_router(html_router)
 
 app.mount(
     "/",
