@@ -1,16 +1,27 @@
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.concurrency import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-
 from personal_site_backend.api.router import api_router
+
+from personal_site_backend.api.dependencies.database import init_db
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WEBSITE_DIRECTORY = PROJECT_ROOT / "src" / "personal_site_imported_frontend"
 
-app = FastAPI(title="Personal Site Backend")
+load_dotenv(PROJECT_ROOT / ".env")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+app = FastAPI(title="Personal Site Backend", lifespan=lifespan)
 
 app.include_router(api_router)
 
