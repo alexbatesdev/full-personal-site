@@ -10,7 +10,7 @@ from personal_site_backend.api.dependencies.security import (
     require_internal_token,
 )
 from personal_site_backend.api.tables.posts import Post
-from personal_site_backend.main import WEBSITE_DIRECTORY
+from personal_site_backend.env import WEBSITE_DIRECTORY
 
 # ^^ Imports ^^
 
