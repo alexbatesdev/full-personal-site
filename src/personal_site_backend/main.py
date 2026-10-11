@@ -1,24 +1,18 @@
-from pathlib import Path
-
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-
 
 from personal_site_backend.api.router import api_router
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-WEBSITE_DIRECTORY = PROJECT_ROOT / "src" / "personal_site_imported_frontend"
-
 app = FastAPI(title="Personal Site Backend")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://static.piinro.place"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(api_router)
-
-app.mount(
-    "/",
-    StaticFiles(directory=WEBSITE_DIRECTORY, html=True),
-    name="website",
-)
 
 
 def main() -> None:
