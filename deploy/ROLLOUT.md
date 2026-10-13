@@ -95,7 +95,9 @@ Do this once if the VPS does not already have the service installed. The command
 
 ### Subsequent deployments
 
-After changes have been pushed to `master`, run:
+Once the GitHub Actions SSH secrets and VPS deploy account are configured as described in `deploy/README.md`, pushes to `master` deploy automatically. The workflow serializes deployments and can also be run manually from the Actions tab.
+
+Until that is configured, or for a manual SSH deploy, run:
 
 ```bash
 ssh <vps>
