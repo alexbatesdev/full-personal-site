@@ -61,17 +61,17 @@ The script fast-forwards the checkout to `origin/master`, updates the frontend s
 
 `.github/workflows/deploy-backend.yml` deploys after pushes to `master`; it can also be run manually with `workflow_dispatch`. It connects over SSH and invokes the existing deploy script. It does not copy or reload Nginx configuration; apply Nginx changes manually using the commands above.
 
-Use a dedicated SSH account instead of storing the root SSH key in GitHub. On the VPS, create `personal-site-deploy`, add its public key to `/home/personal-site-deploy/.ssh/authorized_keys`, and allow it to run only the fixed deploy command without a password:
+Use a dedicated SSH account instead of storing the root SSH key in GitHub. On the VPS, create `dan-the-deployer`, add its public key to `/home/dan-the-deployer/.ssh/authorized_keys`, and allow it to run only the fixed deploy command without a password:
 
 ```bash
-sudo adduser --disabled-password --gecos "" personal-site-deploy
-sudo install -d -o personal-site-deploy -g personal-site-deploy -m 700 /home/personal-site-deploy/.ssh
-sudoedit /home/personal-site-deploy/.ssh/authorized_keys
-sudo chown personal-site-deploy:personal-site-deploy /home/personal-site-deploy/.ssh/authorized_keys
-sudo chmod 600 /home/personal-site-deploy/.ssh/authorized_keys
-printf '%s\n' 'personal-site-deploy ALL=(root) NOPASSWD: /usr/bin/bash /home/personal-site/personal-site-backend/scripts/deploy.sh' | sudo tee /etc/sudoers.d/personal-site-deploy
-sudo chmod 440 /etc/sudoers.d/personal-site-deploy
-sudo visudo -cf /etc/sudoers.d/personal-site-deploy
+sudo adduser --disabled-password --gecos "" dan-the-deployer
+sudo install -d -o dan-the-deployer -g dan-the-deployer -m 700 /home/dan-the-deployer/.ssh
+sudoedit /home/dan-the-deployer/.ssh/authorized_keys
+sudo chown dan-the-deployer:dan-the-deployer /home/dan-the-deployer/.ssh/authorized_keys
+sudo chmod 600 /home/dan-the-deployer/.ssh/authorized_keys
+printf '%s\n' 'dan-the-deployer ALL=(root) NOPASSWD: /usr/bin/bash /home/personal-site/personal-site-backend/scripts/deploy.sh' | sudo tee /etc/sudoers.d/dan-the-deployer
+sudo chmod 440 /etc/sudoers.d/dan-the-deployer
+sudo visudo -cf /etc/sudoers.d/dan-the-deployer
 ```
 
 Generate a dedicated Ed25519 key pair on a trusted computer. Add the `.pub` key to `authorized_keys`; never upload or commit the private key:
@@ -87,7 +87,7 @@ In the GitHub repository, add these Actions secrets under **Settings > Secrets a
 | Secret | Value |
 |---|---|
 | `VPS_HOST` | VPS IP address or SSH hostname, without a username |
-| `VPS_USER` | `personal-site-deploy` |
+| `VPS_USER` | `dan-the-deployer` |
 | `VPS_SSH_PRIVATE_KEY` | Contents of the private key file, `personal-site-actions` |
 | `VPS_KNOWN_HOSTS` | Pinned SSH host-key line(s) for the VPS |
 
