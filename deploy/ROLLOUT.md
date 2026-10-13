@@ -54,7 +54,7 @@ Do this once if the VPS does not already have the service installed. The command
 
 1. Make sure DNS has propagated and the VPS firewall allows ports 22, 80, and 443. The `static` hostname should resolve to Nekoweb; `super` and, with the Nginx redirect setup, the apex and `www` should resolve to the VPS.
 2. Install the required packages and create the service account/checkout, following the initial setup in `deploy/README.md`. Ensure the `personal-site` user can read the checkout and run `uv`.
-3. Obtain the certificate before installing the HTTPS Nginx configuration. Since that configuration references certificate files, first create `/etc/nginx/sites-available/personal-site` with this temporary HTTP-only config, enable it, and reload Nginx:
+3. Obtain the certificate before installing the HTTPS Nginx configuration. Since that configuration references certificate files, first create `/etc/nginx/sites-available/personal-site.conf` with this temporary HTTP-only config, enable it, and reload Nginx:
 
    ```nginx
    server {
@@ -73,7 +73,7 @@ Do this once if the VPS does not already have the service installed. The command
 
    ```bash
    sudo mkdir -p /var/www/certbot
-   sudo ln -s /etc/nginx/sites-available/personal-site /etc/nginx/sites-enabled/personal-site
+   sudo ln -s /etc/nginx/sites-available/personal-site.conf /etc/nginx/sites-enabled/personal-site.conf
    sudo rm -f /etc/nginx/sites-enabled/default
    sudo nginx -t && sudo systemctl reload nginx
    sudo certbot certonly --webroot -w /var/www/certbot --cert-name piinro.place -d piinro.place -d www.piinro.place -d super.piinro.place
@@ -86,8 +86,8 @@ Do this once if the VPS does not already have the service installed. The command
    sudo cp deploy/systemd/personal-site-backend.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable --now personal-site-backend
-   sudo scripts/deploy.sh
-   sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site
+   sudo ./scripts/deploy.sh
+   sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site.conf
    sudo nginx -t && sudo systemctl reload nginx
    ```
 
@@ -100,13 +100,13 @@ After changes have been pushed to `master`, run:
 ```bash
 ssh <vps>
 cd /home/personal-site/personal-site-backend
-sudo scripts/deploy.sh
+sudo ./scripts/deploy.sh
 ```
 
 The deploy script restarts FastAPI but does not install or reload Nginx. When its configuration changes, run:
 
 ```bash
-sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site
+sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site.conf
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
@@ -123,4 +123,4 @@ sudo journalctl -u personal-site-backend -f
 
 After implementing post pages and RSS, also verify `/posts/<id>` and `/feed.xml` on `super.piinro.place`.
 
-Rollback: restore the previous repository version on the VPS, rerun `scripts/deploy.sh`, and restore the previous Nginx configuration if necessary.
+Rollback: restore the previous repository version on the VPS, run `sudo ./scripts/deploy.sh`, and restore the previous Nginx configuration if necessary.

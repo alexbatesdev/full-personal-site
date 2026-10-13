@@ -26,8 +26,8 @@ If `uv` is not installed for the service account, install it according to the of
 
 ```bash
 sudo cp deploy/systemd/personal-site-backend.service /etc/systemd/system/
-sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site
-sudo ln -s /etc/nginx/sites-available/personal-site /etc/nginx/sites-enabled/personal-site
+sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site.conf
+sudo ln -s /etc/nginx/sites-available/personal-site.conf /etc/nginx/sites-enabled/personal-site.conf
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl daemon-reload
@@ -52,7 +52,7 @@ The unit uses `Restart=on-failure`, so systemd restarts the service after an une
 Run the deployment script as root from the checked-out repository:
 
 ```bash
-sudo scripts/deploy.sh
+sudo ./scripts/deploy.sh
 ```
 
 The script fast-forwards the checkout to `origin/master`, updates the frontend submodule, syncs production dependencies, and restarts `personal-site-backend`. It refuses to overwrite local changes because it uses `git pull --ff-only`.
