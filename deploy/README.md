@@ -26,8 +26,8 @@ If `uv` is not installed for the service account, install it according to the of
 
 ```bash
 sudo cp deploy/systemd/personal-site-backend.service /etc/systemd/system/
-sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site
-sudo ln -s /etc/nginx/sites-available/personal-site /etc/nginx/sites-enabled/personal-site
+sudo cp deploy/nginx/personal-site.conf /etc/nginx/sites-available/personal-site.conf
+sudo ln -s /etc/nginx/sites-available/personal-site.conf /etc/nginx/sites-enabled/personal-site.conf
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl daemon-reload
@@ -52,7 +52,43 @@ The unit uses `Restart=on-failure`, so systemd restarts the service after an une
 Run the deployment script as root from the checked-out repository:
 
 ```bash
-sudo scripts/deploy.sh
+sudo ./scripts/deploy.sh
 ```
 
 The script fast-forwards the checkout to `origin/master`, updates the frontend submodule, syncs production dependencies, and restarts `personal-site-backend`. It refuses to overwrite local changes because it uses `git pull --ff-only`.
+
+## GitHub Actions deploy
+
+`.github/workflows/deploy-backend.yml` deploys after pushes to `master`; it can also be run manually with `workflow_dispatch`. It connects over SSH and invokes the existing deploy script. It does not copy or reload Nginx configuration; apply Nginx changes manually using the commands above.
+
+Use a dedicated SSH account instead of storing the root SSH key in GitHub. On the VPS, create `dan-the-deployer`, add its public key to `/home/dan-the-deployer/.ssh/authorized_keys`, and allow it to run only the fixed deploy command without a password:
+
+```bash
+sudo adduser --disabled-password --gecos "" dan-the-deployer
+sudo install -d -o dan-the-deployer -g dan-the-deployer -m 700 /home/dan-the-deployer/.ssh
+sudoedit /home/dan-the-deployer/.ssh/authorized_keys
+sudo chown dan-the-deployer:dan-the-deployer /home/dan-the-deployer/.ssh/authorized_keys
+sudo chmod 600 /home/dan-the-deployer/.ssh/authorized_keys
+printf '%s\n' 'dan-the-deployer ALL=(root) NOPASSWD: /usr/bin/bash /home/personal-site/personal-site-backend/scripts/deploy.sh' | sudo tee /etc/sudoers.d/dan-the-deployer
+sudo chmod 440 /etc/sudoers.d/dan-the-deployer
+sudo visudo -cf /etc/sudoers.d/dan-the-deployer
+```
+
+Generate a dedicated Ed25519 key pair on a trusted computer. Add the `.pub` key to `authorized_keys`; never upload or commit the private key:
+
+```powershell
+ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\personal-site-actions" -C github-actions-personal-site
+```
+
+Leave the key passphrase empty so the non-interactive runner can use it. Protect the `master` branch and require review for workflow/deploy changes: a push to `master` can deploy production code.
+
+In the GitHub repository, add these Actions secrets under **Settings > Secrets and variables > Actions**:
+
+| Secret | Value |
+|---|---|
+| `VPS_HOST` | VPS IP address or SSH hostname, without a username |
+| `VPS_USER` | `dan-the-deployer` |
+| `VPS_SSH_PRIVATE_KEY` | Contents of the private key file, `personal-site-actions` |
+| `VPS_KNOWN_HOSTS` | Pinned SSH host-key line(s) for the VPS |
+
+Obtain host keys with `ssh-keyscan -H <VPS_HOST>`, but verify the fingerprint against the VPS console before saving its output as `VPS_KNOWN_HOSTS`. The workflow rejects unknown or changed host keys. Once these are set and this workflow is pushed to `master`, each push to `master` triggers a deploy; use **Actions > Deploy backend to VPS > Run workflow** for a manual deploy.
