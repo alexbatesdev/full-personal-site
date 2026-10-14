@@ -1,1 +1,1 @@
-uv run fastapi dev src/personal_site_backend/main.py
+PERSONAL_SITE_SERVE_FRONTEND=1 uv run fastapi dev src/personal_site_backend/main.py

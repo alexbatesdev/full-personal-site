@@ -1,10 +1,14 @@
-from fastapi import FastAPI
+import os
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from personal_site_backend.api.dependencies.database import init_db
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from personal_site_backend.api.router import api_router, html_router
+from personal_site_backend.env import WEBSITE_DIRECTORY
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +27,13 @@ app.add_middleware(
 
 app.include_router(api_router)
 app.include_router(html_router)
+
+if os.environ.get("PERSONAL_SITE_SERVE_FRONTEND") == "1":
+    app.mount(
+        "/",
+        StaticFiles(directory=WEBSITE_DIRECTORY, html=True),
+        name="website",
+    )
 
 
 def main() -> None:
