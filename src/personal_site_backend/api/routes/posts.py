@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from personal_site_backend.api.dependencies.database import get_db
@@ -42,12 +44,48 @@ def post_page(post_id: int):
 def index(
     session: Session = Depends(get_db),
     admin_header_present: bool = Depends(has_internal_token),
+    tags: Annotated[list[str] | None, Query()] = None,
+    match_all_tags: bool = False,
+    created_after: int | None = None,
+    created_before: int | None = None,
+    q: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
-    query = select(Post).order_by(Post.id)
+    query = select(Post).order_by(Post.created_at.desc(), Post.id.desc())
     print(f"Admin header present: {admin_header_present}")
     if not admin_header_present:
         query = query.where(Post.private.is_(False))
-    return list(session.scalars(query).all())
+
+    if created_after is not None:
+        query = query.where(Post.created_at >= created_after)
+    if created_before is not None:
+        query = query.where(Post.created_at < created_before)
+
+    if tags:
+        if match_all_tags:
+            for tag in tags:
+                query = query.where(_has_tag([tag]))
+        else:
+            query = query.where(_has_tag(tags))
+
+    if q:
+        escaped = q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{escaped}%"
+        query = query.where(
+            or_(
+                func.lower(Post.title).like(like, escape="\\"),
+                func.lower(Post.body).like(like, escape="\\"),
+            )
+        )
+
+    return list(session.scalars(query.limit(limit).offset(offset)).all())
+
+
+def _has_tag(tags: list[str]):
+    """True when the post's JSON tags list contains any of `tags`."""
+    je = func.json_each(Post.tags).table_valued("value")
+    return exists().where(je.c.value.in_(tags)).select_from(je)
 
 
 @post_api_router.get("/{post_id}", response_model=PostRead)
