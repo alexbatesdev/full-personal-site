@@ -15,17 +15,13 @@ from personal_site_backend.env import WEBSITE_DIRECTORY
 # ^^ Imports ^^
 
 
-class PostFields(BaseModel):
+class PostCreate(BaseModel):
     title: str
     body: str
-    private: bool = False
+    tags: list[str] = []
 
 
-class PostCreate(PostFields):
-    post_to_rss: bool = False
-
-
-class PostRead(PostFields):
+class PostRead(PostCreate):
     id: int
     created_at: str
     model_config = ConfigDict(from_attributes=True)
